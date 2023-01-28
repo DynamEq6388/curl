@@ -137,10 +137,7 @@ class ExecResult:
     @property
     def total_connects(self) -> Optional[int]:
         if len(self.stats):
-            n = 0
-            for stat in self.stats:
-                n += stat['num_connects']
-            return n
+            return sum(stat['num_connects'] for stat in self.stats)
         return None
 
     def add_response(self, resp: Dict):
@@ -163,17 +160,17 @@ class ExecResult:
                 if 'rquery' not in resp['header']:
                     log.error(f'response #{idx} missing "rquery": {resp["header"]}')
                 seen_queries.append(int(resp['header']['rquery']))
-            for i in range(0, count-1):
+            for i in range(count-1):
                 if i not in seen_queries:
                     log.error(f'response for query {i} missing')
             if self.with_stats and len(self.stats) == count:
                 log.error(f'got all {count} stats, though')
         assert len(self.responses) == count, \
-            f'response count: expected {count}, got {len(self.responses)}'
+                f'response count: expected {count}, got {len(self.responses)}'
         if exp_status is not None:
             for idx, x in enumerate(self.responses):
                 assert x['status'] == exp_status, \
-                    f'response #{idx} unexpectedstatus: {x["status"]}'
+                        f'response #{idx} unexpectedstatus: {x["status"]}'
         if self.with_stats:
             assert len(self.stats) == count, f'{self}'
 
@@ -192,7 +189,7 @@ class CurlClient:
     def __init__(self, env: Env, run_dir: Optional[str] = None):
         self.env = env
         self._curl = os.environ['CURL'] if 'CURL' in os.environ else env.curl
-        self._run_dir = run_dir if run_dir else os.path.join(env.gen_dir, 'curl')
+        self._run_dir = run_dir or os.path.join(env.gen_dir, 'curl')
         self._stdoutfile = f'{self._run_dir}/curl.stdout'
         self._stderrfile = f'{self._run_dir}/curl.stderr'
         self._headerfile = f'{self._run_dir}/curl.headers'
@@ -282,18 +279,21 @@ class CurlClient:
                     raise Exception(f'unknown ALPN protocol: "{alpn_proto}"')
                 args.append(self.ALPN_ARG[alpn_proto])
 
-            if u.scheme == 'http':
+            if (
+                u.scheme == 'http'
+                or not insecure
+                and options
+                and "--cacert" in options
+            ):
                 pass
             elif insecure:
                 args.append('--insecure')
-            elif options and "--cacert" in options:
-                pass
             elif u.hostname:
                 args.extend(["--cacert", self.env.ca.cert_file])
 
             if force_resolve and u.hostname and u.hostname != 'localhost' \
-                    and not re.match(r'^(\d+|\[|:).*', u.hostname):
-                port = u.port if u.port else 443
+                        and not re.match(r'^(\d+|\[|:).*', u.hostname):
+                port = u.port or 443
                 args.extend(["--resolve", f"{u.hostname}:{port}:127.0.0.1"])
             if timeout is not None and int(timeout) > 0:
                 args.extend(["--connect-timeout", str(int(timeout))])
@@ -334,24 +334,24 @@ class CurlClient:
                 if m:
                     fin_response(response)
                     response = {
-                        "protocol": m.group(1),
-                        "status": int(m.group(2)),
-                        "description": m.group(3),
+                        "protocol": m[1],
+                        "status": int(m[2]),
+                        "description": m[3],
                         "header": {},
                         "trailer": {},
-                        "body": r.outraw
+                        "body": r.outraw,
                     }
                     expected = ['header']
                     continue
             if 'trailer' in expected:
                 m = re.match(r'^([^:]+):\s*(.*)$', line)
                 if m:
-                    response['trailer'][m.group(1).lower()] = m.group(2)
+                    response['trailer'][m[1].lower()] = m[2]
                     continue
             if 'header' in expected:
                 m = re.match(r'^([^:]+):\s*(.*)$', line)
                 if m:
-                    response['header'][m.group(1).lower()] = m.group(2)
+                    response['header'][m[1].lower()] = m[2]
                     continue
             assert False, f"unexpected line: '{line}, expected: {expected}'"
 

@@ -124,10 +124,8 @@ class EnvConfig:
         if not os.path.isfile(self.apachectl):
             return f'apachectl ({self.apachectl}) not found'
         if self.apxs is None:
-            return f"apxs (provided by apache2-dev) not found"
-        if not os.path.isfile(self.apxs):
-            return f"apxs ({self.apxs}) not found"
-        return None
+            return "apxs (provided by apache2-dev) not found"
+        return None if os.path.isfile(self.apxs) else f"apxs ({self.apxs}) not found"
 
 
 class Env:
@@ -174,9 +172,7 @@ class Env:
 
     def get_credentials(self, domain) -> Optional[Credentials]:
         creds = self.ca.get_credentials_for_name(domain)
-        if len(creds) > 0:
-            return creds[0]
-        return None
+        return creds[0] if len(creds) > 0 else None
 
     @property
     def verbose(self) -> int:

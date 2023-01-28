@@ -40,20 +40,22 @@ from cryptography.x509 import ExtendedKeyUsageOID, NameOID
 
 
 EC_SUPPORTED = {}
-EC_SUPPORTED.update([(curve.name.upper(), curve) for curve in [
-    ec.SECP192R1,
-    ec.SECP224R1,
-    ec.SECP256R1,
-    ec.SECP384R1,
-]])
+EC_SUPPORTED |= [
+    (curve.name.upper(), curve)
+    for curve in [
+        ec.SECP192R1,
+        ec.SECP224R1,
+        ec.SECP256R1,
+        ec.SECP384R1,
+    ]
+]
 
 
 def _private_key(key_type):
     if isinstance(key_type, str):
         key_type = key_type.upper()
-        m = re.match(r'^(RSA)?(\d+)$', key_type)
-        if m:
-            key_type = int(m.group(2))
+        if m := re.match(r'^(RSA)?(\d+)$', key_type):
+            key_type = int(m[2])
 
     if isinstance(key_type, int):
         return rsa.generate_private_key(
@@ -198,7 +200,7 @@ class Credentials:
 
     def issue_cert(self, spec: CertificateSpec,
                    chain: Optional[List['Credentials']] = None) -> 'Credentials':
-        key_type = spec.key_type if spec.key_type else self.key_type
+        key_type = spec.key_type or self.key_type
         creds = None
         if self._store:
             creds = self._store.load_credentials(
@@ -363,7 +365,7 @@ class TestCA:
         elif common_name:
             name_pieces.append(x509.NameAttribute(NameOID.COMMON_NAME, common_name))
         if parent:
-            name_pieces.extend([rdn for rdn in parent])
+            name_pieces.extend(list(parent))
         return x509.Name(name_pieces)
 
     @staticmethod

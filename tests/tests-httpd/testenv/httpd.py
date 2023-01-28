@@ -78,7 +78,7 @@ class Httpd:
                 if os.path.isdir(md):
                     self._mods_dir = md
         if self._mods_dir is None:
-            raise Exception(f'apache modules dir cannot be found')
+            raise Exception('apache modules dir cannot be found')
         self._process = None
         self._rmf(self._error_log)
         self._init_curltest()
@@ -190,20 +190,18 @@ class Httpd:
                     fd.write(f'LoadModule {m}_module   "{self._mods_dir}/mod_{m}.so"\n')
             if Httpd.MOD_CURLTEST is not None:
                 fd.write(f'LoadModule curltest_module   \"{Httpd.MOD_CURLTEST}\"\n')
-            conf = [   # base server config
+            conf = [
                 f'ServerRoot "{self._apache_dir}"',
-                f'DefaultRuntimeDir logs',
-                f'PidFile httpd.pid',
+                'DefaultRuntimeDir logs',
+                'PidFile httpd.pid',
                 f'ErrorLog {self._error_log}',
                 f'LogLevel {self._get_log_level()}',
-                f'LogLevel http:trace4',
-                f'H2MinWorkers 16',
-                f'H2MaxWorkers 128',
+                'LogLevel http:trace4',
+                'H2MinWorkers 16',
+                'H2MaxWorkers 128',
                 f'Listen {self.env.http_port}',
                 f'Listen {self.env.https_port}',
                 f'TypesConfig "{self._conf_dir}/mime.types',
-                # we want the quest string in a response header, so we
-                # can check responses more easily
                 f'Header set rquery "%{{QUERY_STRING}}s"',
             ]
             conf.extend([  # plain http host for domain1
@@ -212,38 +210,33 @@ class Httpd:
                 f'    DocumentRoot "{self._docs_dir}"',
             ])
             conf.extend(self._curltest_conf())
-            conf.extend([
-                f'</VirtualHost>',
-                f'',
-            ])
-            conf.extend([  # https host for domain1, h1 + h2
-                f'<VirtualHost *:{self.env.https_port}>',
-                f'    ServerName {domain1}',
-                f'    Protocols h2 http/1.1',
-                f'    SSLEngine on',
-                f'    SSLCertificateFile {creds1.cert_file}',
-                f'    SSLCertificateKeyFile {creds1.pkey_file}',
-                f'    DocumentRoot "{self._docs_dir}"',
-            ])
+            conf.extend(['</VirtualHost>', f''])
+            conf.extend(
+                [
+                    f'<VirtualHost *:{self.env.https_port}>',
+                    f'    ServerName {domain1}',
+                    '    Protocols h2 http/1.1',
+                    '    SSLEngine on',
+                    f'    SSLCertificateFile {creds1.cert_file}',
+                    f'    SSLCertificateKeyFile {creds1.pkey_file}',
+                    f'    DocumentRoot "{self._docs_dir}"',
+                ]
+            )
             conf.extend(self._curltest_conf())
-            conf.extend([
-                f'</VirtualHost>',
-                f'',
-            ])
-            conf.extend([  # https host for domain2, no h2
-                f'<VirtualHost *:{self.env.https_port}>',
-                f'    ServerName {domain2}',
-                f'    Protocols http/1.1',
-                f'    SSLEngine on',
-                f'    SSLCertificateFile {creds2.cert_file}',
-                f'    SSLCertificateKeyFile {creds2.pkey_file}',
-                f'    DocumentRoot "{self._docs_dir}/two"',
-            ])
+            conf.extend(['</VirtualHost>', f''])
+            conf.extend(
+                [
+                    f'<VirtualHost *:{self.env.https_port}>',
+                    f'    ServerName {domain2}',
+                    '    Protocols http/1.1',
+                    '    SSLEngine on',
+                    f'    SSLCertificateFile {creds2.cert_file}',
+                    f'    SSLCertificateKeyFile {creds2.pkey_file}',
+                    f'    DocumentRoot "{self._docs_dir}/two"',
+                ]
+            )
             conf.extend(self._curltest_conf())
-            conf.extend([
-                f'</VirtualHost>',
-                f'',
-            ])
+            conf.extend(['</VirtualHost>', f''])
             fd.write("\n".join(conf))
         with open(os.path.join(self._conf_dir, 'mime.types'), 'w') as fd:
             fd.write("\n".join([
@@ -257,19 +250,17 @@ class Httpd:
             return 'trace2'
         if self.env.verbose > 2:
             return 'trace1'
-        if self.env.verbose > 1:
-            return 'debug'
-        return 'info'
+        return 'debug' if self.env.verbose > 1 else 'info'
 
     def _curltest_conf(self) -> List[str]:
         if Httpd.MOD_CURLTEST is not None:
             return [
-                f'    <Location /curltest/echo>',
-                f'      SetHandler curltest-echo',
-                f'    </Location>',
-                f'    <Location /curltest/tweak>',
-                f'      SetHandler curltest-tweak',
-                f'    </Location>',
+                '    <Location /curltest/echo>',
+                '      SetHandler curltest-echo',
+                '    </Location>',
+                '    <Location /curltest/tweak>',
+                '      SetHandler curltest-tweak',
+                '    </Location>',
             ]
         return []
 

@@ -207,15 +207,14 @@ class Negotiator(object):
                         NegOptions.NEW_ENVIRON]:
             log.debug("Option: %s", NegOptions.from_val(byte_int))
 
-            # No further negotiation of this option needed. Reset the state.
-            self.state = self.NO_NEG
-
         else:
             # Received an unexpected byte. Stop negotiations
             log.error("Unexpected byte %s in state %s",
                       byte_int,
                       self.state)
-            self.state = self.NO_NEG
+
+        # No further negotiation of this option needed. Reset the state.
+        self.state = self.NO_NEG
 
     def send_message(self, message_ints):
         self.tcp.sendall(bytearray(message_ints))
@@ -249,11 +248,9 @@ class NegBase(object):
 
     @classmethod
     def from_val(cls, val):
-        for k in cls.__dict__.keys():
-            if getattr(cls, k) == val:
-                return k
-
-        return "<unknown>"
+        return next(
+            (k for k in cls.__dict__.keys() if getattr(cls, k) == val), "<unknown>"
+        )
 
 
 class NegTokens(NegBase):
