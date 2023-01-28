@@ -78,12 +78,11 @@ class TestData(object):
         with open(filename, "rb") as f:
             contents = f.read().decode("utf-8")
 
-        m = REPLY_DATA.search(contents)
-        if not m:
+        if m := REPLY_DATA.search(contents):
+            # Left-strip the data so we don't get a newline before our data.
+            return m.group(1).lstrip()
+        else:
             raise Exception("Couldn't find a <reply><data> section")
-
-        # Left-strip the data so we don't get a newline before our data.
-        return m.group(1).lstrip()
 
 
 if __name__ == '__main__':

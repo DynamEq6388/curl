@@ -72,7 +72,7 @@ class Nghttpx:
             f'--frontend=*,{self.env.h3_port};quic',
             f'--backend=127.0.0.1,{self.env.https_port};{self.env.domain1};sni={self.env.domain1};proto=h2;tls',
             f'--backend=127.0.0.1,{self.env.http_port}',
-            f'--log-level=INFO',
+            '--log-level=INFO',
             f'--pid-file={self._pid_file}',
             f'--errorlog-file={self._error_log}',
             f'--conf={self._conf_file}',
@@ -119,7 +119,7 @@ class Nghttpx:
 
     def _write_config(self):
         with open(self._conf_file, 'w') as fd:
-            fd.write(f'# nghttpx test config'),
+            (fd.write('# nghttpx test config'), )
             fd.write("\n".join([
                 '# do we need something here?'
             ]))

@@ -35,7 +35,7 @@ from testenv import Env, Nghttpx, Httpd
 
 
 def pytest_report_header(config, startdir):
-    return f"curl tests-httpd tests"
+    return "curl tests-httpd tests"
 
 
 def pytest_addoption(parser):

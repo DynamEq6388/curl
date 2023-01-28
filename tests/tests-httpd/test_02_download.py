@@ -159,7 +159,7 @@ class TestDownload:
                 if 'rquery' not in resp['header']:
                     log.error(f'response #{idx} missing "rquery": {resp["header"]}')
                 seen_queries.append(int(resp['header']['rquery']))
-            for i in range(0,count-1):
+            for i in range(count-1):
                 if i not in seen_queries:
                     log.error(f'response for query {i} missing')
             if r.with_stats and len(r.stats) == count:
@@ -168,6 +168,6 @@ class TestDownload:
         if exp_status is not None:
             for idx, x in enumerate(r.responses):
                 assert x['status'] == exp_status, \
-                    f'response #{idx} unexpectedstatus: {x["status"]}'
+                        f'response #{idx} unexpectedstatus: {x["status"]}'
         if r.with_stats:
             assert len(r.stats) == count, f'{r}'
